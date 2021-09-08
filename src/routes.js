@@ -6,10 +6,10 @@ import Patients from './Pages/Patients/Patients';
 const Routes = () => {
     return (
         <Switch>
-            <Route exact path="/patients" component={Patients} />
+            <Route exact path="/" component={Patients} />
             <Route exact path="/patients/:id/:seed/:page" component={Patients} />
 
-            {/* <Redirect to="/patients" /> */}
+            <Redirect from="*" to="/" />
         </Switch>
     );
 };
