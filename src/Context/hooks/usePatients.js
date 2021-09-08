@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import axios from 'axios';
-import history from "../../history";
+import { Button } from "@material-ui/core";
 
 const usePatients = () => {
     const [modalOpen, setModalOpen] = useState(false);
@@ -11,32 +11,49 @@ const usePatients = () => {
     const [pagination, setPagination] = useState({});
     const [loadingMessage, setLoadingMessage] = useState("");
     const [searchName, setSearchName] = useState("");
+    const [searchNationality, setSearchNationality] = useState("");
     const [filteredData, setFilteredData] = useState([]);
+
+    const transformData = (data) => {
+        return data.results.map((res) => {
+            return {
+                ...res,
+                pagination: data.info.page
+            };
+        });
+    };
 
     const getPatientsData = (patientInfo) => {
         setIsLoading(true);
         setLoadingMessage("Loading data...");
-        let url = patientInfo ? `https://randomuser.me/api/?page=1&results=${50 * patientInfo.page}&seed=${patientInfo.seed}` : "https://randomuser.me/api/?results=50";
-        axios.get(url)
-            .then((response) => {
-                setPatients(response.data.results);
-                setPagination(response.data.info);
+
+        let urlsToRequest = [];
+        if (patientInfo) {
+            for (let i = 1; i <= patientInfo.page; i++) {
+                urlsToRequest.push(axios.get(`https://randomuser.me/api/?page=${i}&results=50&seed=${patientInfo.seed}`));
+            }
+        }
+        else {
+            urlsToRequest.push(axios.get("https://randomuser.me/api/?results=50"));
+        }
+
+        Promise
+            .all(urlsToRequest)
+            .then((responses) => {
                 setIsLoading(false);
-                if (patientInfo) {
-                    /* setSelectedPatient(response.data.results.filter((patient) => ((patient.id.value !== null && patient.id.value.replace(" ", "") === patientInfo.patientId) || ((patient.nat + "-" + patient.cell).replace(" ", "") === patientInfo.patientId)))[0]); */
-                    setSelectedPatient(response.data.results.filter((patient) => patient && patient.id && patient.id.value && patient.id.value.replace(" ", "") === patientInfo.patientId)[0]);
-                    response.data.results.filter((patient, index) => {
-                        if (patient && patient.id && patient.id.value && patient.id.value.replace(" ", "") === patientInfo.patientId) {
-                            console.log(index + " Encontou");
-                            return patient;
+                responses.map((response) => {
+                    setPatients(oldArray => [...oldArray, ...transformData(response.data)]);
+                    setPagination(response.data.info);
+                    if (patientInfo) {
+                        let patient = response.data.results.filter((patient) => patient && patient.login && patient.login.uuid === patientInfo.patientId)[0];
+                        if (patient) {
+                            setSelectedPatient({ ...patient, pagination: patientInfo.page });
+                            setModalOpen(true);
                         }
-                        else {
-                            console.log(`${index} ${patient.id.value} é diferente de ${patientInfo.patientId}`);
-                        }
-                    });
-                    setModalOpen(true);
-                }
-            });
+                    }
+                });
+            })
+            .catch((error) => console.log("ERRO"));
     };
 
     const loadMorePatients = () => {
@@ -45,7 +62,7 @@ const usePatients = () => {
         var url = `https://randomuser.me/api/?page=${pagination.page + 1}&results=50&seed=${pagination.seed}`;
         axios.get(url)
             .then((response) => {
-                setPatients(oldArray => [...oldArray, ...response.data.results]);
+                setPatients(oldArray => [...oldArray, ...transformData(response.data)]);
                 setPagination(response.data.info);
                 setIsLoading(false);
             });
@@ -67,24 +84,51 @@ const usePatients = () => {
 
     const getViewInfoAction = (infoData) => {
         return (
-            <button onClick={() => handleModalOpen(infoData)}>
-                Detalhes
-            </button>
+            <Button
+                onClick={() => handleModalOpen(infoData)}
+                color="primary"
+                variant="contained"
+            >
+                Visualizar
+            </Button>
         );
+    };
+
+    const getDateOfBirth = (date) => {
+        var arrayDOB = date.split("-");
+        arrayDOB.splice(2, 1, arrayDOB[2].split("T")[0]);
+        return arrayDOB;
+    };
+
+    const getAddress = (location) => {
+        var address = `${location && location.street && location.street.name ? location.street.name : ""}, `;
+        address += `${location && location.street && location.street.number ? location.street.number : ""}, `;
+        address += `${location && location.city ? location.city : ""}, `;
+        address += `${location && location.state ? location.state : ""}, `;
+        address += `${location && location.country ? location.country : ""}`;
+        return address;
+    };
+
+    const getParamsId = (params) => {
+        return params && params.login ? params.login.uuid : "";
+    };
+
+    const findByFields = (data, name, nationality) => {
+        return data.filter((patient) => {
+            var fullName = `${patient.name.first} ${patient.name.last}`.toLowerCase();
+            return (fullName.includes(name.toLowerCase()) && (patient && patient.nat.toLowerCase().includes(nationality.toLowerCase()))) && patient;
+        });
     };
 
     const clearFilter = () => {
         setFilteredData([]);
+        setSearchName("");
+        setSearchNationality("");
     };
 
     const getPatientURL = (params) => {
         let baseURL = "http://localhost:3000/patients/";
-        if (params && params.id && params.id.value !== null) {
-            return `${baseURL}${params.id.value.replace(" ", "")}/${pagination.seed}/${pagination.page}`;
-        }
-        else {
-            return `${baseURL}${params.nat + "-" + (params.cell && params.cell.replace(" ", ""))}/${pagination.seed}/${pagination.page}`;
-        }
+        return `${baseURL}${params && params.login && params.login.uuid}/${pagination.seed}/${params.pagination}`;
     };
 
     useEffect(() => {
@@ -117,7 +161,13 @@ const usePatients = () => {
         setFilteredData,
         getViewInfoAction,
         clearFilter,
-        getPatientURL
+        getPatientURL,
+        searchNationality,
+        setSearchNationality,
+        getDateOfBirth,
+        getAddress,
+        getParamsId,
+        findByFields
     };
 };
 

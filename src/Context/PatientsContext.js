@@ -21,7 +21,13 @@ const PatientsProvider = ({ children }) => {
         setFilteredData,
         getViewInfoAction,
         clearFilter,
-        getPatientURL
+        getPatientURL,
+        searchNationality,
+        setSearchNationality,
+        getDateOfBirth,
+        getAddress,
+        getParamsId,
+        findByFields
     } = usePatients();
 
     return (
@@ -42,7 +48,13 @@ const PatientsProvider = ({ children }) => {
             setFilteredData,
             getViewInfoAction,
             clearFilter,
-            getPatientURL
+            getPatientURL,
+            searchNationality,
+            setSearchNationality,
+            getDateOfBirth,
+            getAddress,
+            getParamsId,
+            findByFields
         }}>
             {children}
         </Context.Provider>

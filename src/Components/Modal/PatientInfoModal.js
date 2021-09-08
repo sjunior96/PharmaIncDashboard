@@ -1,19 +1,17 @@
 import React, { useContext } from 'react';
-import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import Slide from '@material-ui/core/Slide';
 import { Avatar, DialogContentText, makeStyles, Typography } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
-import { getParamsId } from '../../utils/utils';
 import { Context } from '../../Context/PatientsContext';
+import Link from '@material-ui/core/Link';
 
 
 export default function PatientInfoModal({ labels }) {
-    const { modalOpen, selectedPatient, handleModalClose } = useContext(Context);
+    const { modalOpen, selectedPatient, handleModalClose, getParamsId } = useContext(Context);
     const classes = useStyles();
     return (
         <div>
@@ -37,9 +35,9 @@ export default function PatientInfoModal({ labels }) {
                 </DialogTitle>
                 <DialogContent>
                     {labels.map((label) => label.valueGetter && selectedPatient ? (
-                        <Typography>{label.labelName}: {label.valueGetter(selectedPatient)}</Typography>
+                        <Typography>{label.labelName}: {label.fieldType === "link" ? <Link target="_blank" href={label.valueGetter(selectedPatient)}>{label.valueGetter(selectedPatient)}</Link> : label.valueGetter(selectedPatient)}</Typography>
                     ) : (
-                        <Typography>{label.labelName}: {selectedPatient && selectedPatient[label.field]}</Typography>
+                        <Typography>{label.labelName}: {label.fieldType === "link" ? <Link href="#">{selectedPatient && selectedPatient[label.field]}</Link> : selectedPatient && selectedPatient[label.field]}</Typography>
                     )
                     )}
                     {selectedPatient && getParamsId(selectedPatient).includes("*") && <DialogContentText className={classes.noteText}>*Por possuir ID inválido retornado pela RandomUserAPI,
