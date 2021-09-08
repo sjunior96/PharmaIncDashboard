@@ -6,7 +6,7 @@ Uma dashboard para gestão e visualização das informações dos pacientes da e
 
 #### Recursos utilizados
 
-ReactJS
+ReactJS (HTML, JavaScript, CSS)
 Axios
 React Router DOM
 History
@@ -43,7 +43,7 @@ A dashboard for managing and viewing patient information from the company Pharma
 
 #### Resources used
 
-ReactJS
+ReactJS (HTML, JavaScript, CSS)
 Axios
 React Router DOM
 History
